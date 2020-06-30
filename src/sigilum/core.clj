@@ -1,6 +1,7 @@
 (ns sigilum.core
   (:require [quil.core :as q]
-            [quil.middleware :as m]))
+            [quil.middleware :as m]
+            [gil.core :as g]))
 
 (def width 500)
 (def height 500)
@@ -88,11 +89,11 @@
   (q/stroke 255)
   (let [outer 250
         inner (* 0.85 outer)]
-    (draw-name-circle outer inner "Arial" "o shit waddup * " (:angle state))
+    (draw-name-circle outer inner "Arial" "what i thought i'd do was i'd pretend i was one of those twitch streamers * " (- (:angle state)))
     (draw-gram 7 3 center-coord inner -)
     (draw-gram 5 2 [200 120] (- inner 150) + (- (:angle state)))
     )
-  
+  #_(g/save-animation "hail.gif" 200 10)
   )
 
 
