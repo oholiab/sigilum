@@ -1,5 +1,6 @@
 (ns sigilum.core
-  (:require [quil.core :as q]))
+  (:require [quil.core :as q]
+            [quil.middleware :as m]))
 
 (def width 500)
 (def height 500)
@@ -11,26 +12,21 @@
 (def y last)
 
 (defn setup []
-  ;; Set frame rate to 30 frames per second.
   (q/frame-rate 30)
-  ;; Set color mode to HSB (HSV) instead of default RGB.
   (q/color-mode :hsb)
-  ;; setup function returns initial state. It contains
-  ;; circle color and position.
-  {:color 0
-   :angle 0})
+  {:angle 0})
 
-(defn update-state [state]
-  ;; Update sketch state by changing circle color and position.
-  {:color 255
-   :angle (+ (:angle state) 0.1)})
+(defn update [state]
+  {:angle (+ (:angle state) 0.01)})
 
 (defn gen-angles
   ([num-points]
-   (gen-angles num-points +))
+   (gen-angles num-points + 0))
   ([num-points orientation]
+   (gen-angles num-points orientation 0))
+  ([num-points orientation offset]
    (let [half-pi (orientation (/ Math/PI 2))]
-     (range half-pi (+ τ half-pi) (/ τ num-points)))))
+     (range (+ half-pi offset) (+ τ half-pi offset) (/ τ num-points)))))
 
 (defn coord-from-angle [center radius angle]
   (vector (+ (* radius (Math/cos angle)) (x center))
@@ -57,18 +53,20 @@
 
 (defn draw-gram
   ([num-points skip center radius]
-   (draw-gram num-points skip center radius +))
+   (draw-gram num-points skip center radius + 0))
   ([num-points skip center radius orientation]
+   (draw-gram num-points skip center radius orientation 0))
+  ([num-points skip center radius orientation offset]
    (doall
     (map (partial apply q/line) 
          (generate-line-list
-          (gen-points (gen-angles num-points orientation) center radius)
+          (gen-points (gen-angles num-points orientation offset) center radius)
           skip)))))
 
-(defn text-in-circle [name radius]
-  (map vector name (gen-points (gen-angles (count name)) center-coord radius)))
+(defn text-in-circle [name radius offset]
+  (map vector name (gen-points (gen-angles (count name) + offset) center-coord radius)))
 
-(defn draw-name-circle [outer inner font name]
+(defn draw-name-circle [outer inner font name offset]
   (let [outer-c (* 2 outer)
         inner-c (* 2 inner)
         middle (/ (+ inner outer) 2)]
@@ -80,19 +78,19 @@
     (doall
      (map
       #(q/text (str (first %)) (x (last %)) (y (last %)))
-      (text-in-circle name middle))
+      (text-in-circle name middle offset))
      )))
 
-(defn draw []
+(defn draw [state]
   (q/background 0)
   (q/fill 0 0 0)
   (q/stroke-weight 6)
   (q/stroke 255)
   (let [outer 250
         inner (* 0.85 outer)]
-    (draw-name-circle outer inner "Malachim" "malachim")
+    (draw-name-circle outer inner "Arial" "o shit waddup * " (:angle state))
     (draw-gram 7 3 center-coord inner -)
-    (draw-gram 5 2 [200 120] (- inner 150))
+    (draw-gram 5 2 [200 120] (- inner 150) + (- (:angle state)))
     )
   
   )
@@ -104,7 +102,8 @@
   ;; setup function called only once, during sketch initialization.
   :setup setup
   ;; update-state is called on each iteration before draw-state.
-  ;; :update update-state
+  :update update
   :draw draw
   :features [:keep-on-top :no-bind-output]
+  :middleware [m/fun-mode]
   )
