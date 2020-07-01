@@ -3,8 +3,8 @@
             [quil.middleware :as m]
             [gil.core :as g]))
 
-(def width 500)
-(def height 500)
+(def width 800)
+(def height 800)
 (def center-x (/ width 2))
 (def center-y (/ height 2))
 (def center-coord [center-x center-y])
@@ -67,13 +67,32 @@
 (defn text-in-circle [name radius offset]
   (map vector name (gen-points (gen-angles (count name) + offset) center-coord radius)))
 
+(defn draw-our-cross [height width center-coords]
+  (let [thickness (/ width 10)
+        c-x (x center-coords)
+        c-y (y center-coords)
+        vertical-bar-y (- c-y (/ height 2))
+        vertical-bar-x (- c-x (/ thickness 2))
+        long-horizontal-bar-width (/ width 1.5) 
+        long-horizontal-bar-x (- c-x (/ long-horizontal-bar-width 2))
+        long-horizontal-bar-y (+ vertical-bar-y (* height 0.7))
+        short-horizontal-bar-width (/ long-horizontal-bar-width 2) 
+        short-horizontal-bar-x (- c-x (/ short-horizontal-bar-width 2))
+        short-horizontal-bar-y (+ vertical-bar-y (* height 0.55))
+        ]
+    (q/fill 255)
+    (q/rect vertical-bar-x vertical-bar-y thickness height)
+    (q/rect long-horizontal-bar-x long-horizontal-bar-y long-horizontal-bar-width thickness)
+    (q/rect short-horizontal-bar-x short-horizontal-bar-y short-horizontal-bar-width (* thickness 0.7))
+    ))
+
 (defn draw-name-circle [outer inner font name offset]
   (let [outer-c (* 2 outer)
         inner-c (* 2 inner)
         middle (/ (+ inner outer) 2)]
     (q/ellipse center-x center-y outer-c outer-c)
     (q/ellipse center-x center-y inner-c inner-c)
-    (q/text-font (q/create-font font 20 true))
+    (q/text-font (q/create-font font 40 true))
     (q/text-align :center :center)
     (q/fill 255)
     (doall
@@ -87,24 +106,25 @@
   (q/fill 0 0 0)
   (q/stroke-weight 6)
   (q/stroke 255)
-  (let [outer 250
+  (let [outer (/ width 2)
         inner (* 0.85 outer)]
-    (draw-name-circle outer inner "Arial" "what i thought i'd do was i'd pretend i was one of those twitch streamers * " (- (:angle state)))
-    (draw-gram 7 3 center-coord inner -)
-    (draw-gram 5 2 [200 120] (- inner 150) + (- (:angle state)))
+    (draw-name-circle outer inner "Copperplate" "International House of Brütals * " (- (:angle state)))
+    (draw-gram 7 3 center-coord inner - (:angle state))
+    #_(draw-gram 5 2 [200 120] (- inner 150) + (- (:angle state)))
+    (let [height (* 2 inner)]
+      (draw-our-cross height height center-coord))
     )
-  #_(g/save-animation "hail.gif" 200 10)
+  #_(g/save-animation "brutals.gif" 200 10)
+  #_(q/text (str "display density: " (.displayDensity (quil.applet/current-applet))) 10 20)
   )
 
 
 (q/defsketch sigilum
   :title "Hail"
-  :size [500 500]
-  ;; setup function called only once, during sketch initialization.
+  :size [width height]
   :setup setup
-  ;; update-state is called on each iteration before draw-state.
   :update update
   :draw draw
   :features [:keep-on-top :no-bind-output]
   :middleware [m/fun-mode]
-  )
+  :settings #(.pixelDensity (quil.applet/current-applet) (.displayDensity (quil.applet/current-applet))))
