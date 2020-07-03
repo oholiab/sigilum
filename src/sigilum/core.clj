@@ -15,10 +15,12 @@
 (defn setup []
   (q/frame-rate 30)
   (q/color-mode :hsb)
-  {:angle 0})
+  {:angle 0
+   :image (q/load-image "assets/hexadventure.gif")})
 
 (defn update [state]
-  {:angle (+ (:angle state) 0.01)})
+  {:angle (+ (:angle state) 0.01)
+   :image (:image state)})
 
 (defn gen-angles
   ([num-points]
@@ -64,8 +66,11 @@
           (gen-points (gen-angles num-points orientation offset) center radius)
           skip)))))
 
-(defn text-in-circle [name radius offset]
-  (map vector name (gen-points (gen-angles (count name) + offset) center-coord radius)))
+(defn text-in-circle
+  "Returns a seq of vectors of the form [letter angle [x-coord y-coord]]"
+  [name radius offset]
+  (let [angles (gen-angles (count name) + offset)]
+    (map vector name angles (gen-points angles center-coord radius))))
 
 (defn draw-our-cross [height width center-coords]
   (let [thickness (/ width 10)
@@ -108,14 +113,16 @@
   (q/stroke 255)
   (let [outer (/ width 2)
         inner (* 0.85 outer)]
-    (draw-name-circle outer inner "Copperplate" "International House of Brütals * " (- (:angle state)))
+    (draw-name-circle outer inner "Courier" "I thought what I'd do was, I'd pretend I was one of those Twitch streamers * " (- (:angle state)))
     (draw-gram 7 3 center-coord inner - (:angle state))
     #_(draw-gram 5 2 [200 120] (- inner 150) + (- (:angle state)))
-    (let [height (* 2 inner)]
+    #_(let [height (* 2 inner)]
       (draw-our-cross height height center-coord))
     )
+  (q/image-mode :center)
+  (q/image (:image state) (x center-coord) (y center-coord))
   #_(g/save-animation "brutals.gif" 200 10)
-  (q/text (str "angle: " (:angle state)) 10 20)
+  #_(q/text (str "angle: " (:angle state)) 10 20)
   )
 
 
@@ -127,4 +134,5 @@
   :draw draw
   :features [:keep-on-top :no-bind-output]
   :middleware [m/fun-mode]
-  :settings #(.pixelDensity (quil.applet/current-applet) (.displayDensity (quil.applet/current-applet))))
+  ;; :settings #(.pixelDensity (quil.applet/current-applet) (.displayDensity (quil.applet/current-applet)))
+  )
