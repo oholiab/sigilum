@@ -27,7 +27,7 @@
    (gen-angles num-points orientation 0))
   ([num-points orientation offset]
    (let [half-pi (orientation (/ Math/PI 2))]
-     (range (+ half-pi offset) (+ τ half-pi offset) (/ τ num-points)))))
+     (take num-points (range (+ half-pi offset) (+ τ half-pi offset) (/ τ num-points))))))
 
 (defn coord-from-angle [center radius angle]
   (vector (+ (* radius (Math/cos angle)) (x center))
@@ -115,7 +115,7 @@
       (draw-our-cross height height center-coord))
     )
   #_(g/save-animation "brutals.gif" 200 10)
-  #_(q/text (str "display density: " (.displayDensity (quil.applet/current-applet))) 10 20)
+  (q/text (str "angle: " (:angle state)) 10 20)
   )
 
 
