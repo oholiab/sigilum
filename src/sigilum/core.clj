@@ -91,6 +91,12 @@
     (q/rect short-horizontal-bar-x short-horizontal-bar-y short-horizontal-bar-width (* thickness 0.7))
     ))
 
+(defn character-at-position-and-angle [character coord angle]
+  (q/with-rotation [angle (x center-coord) (y center-coord) 0]
+    (q/text character (x coord) (y coord)))
+  )
+
+
 (defn draw-name-circle [outer inner font name offset]
   (let [outer-c (* 2 outer)
         inner-c (* 2 inner)
@@ -100,11 +106,18 @@
     (q/text-font (q/create-font font 40 true))
     (q/text-align :center :center)
     (q/fill 255)
+    #_(doall
+       (map
+        #(q/text (str (first %)) (x (last %)) (y (last %)))
+        (text-in-circle name middle offset))
+       )
     (doall
      (map
-      #(q/text (str (first %)) (x (last %)) (y (last %)))
-      (text-in-circle name middle offset))
-     )))
+      #(character-at-position-and-angle
+        (str (first %))
+        (last %)
+        (second %))
+      (text-in-circle name middle offset)))))
 
 (defn draw [state]
   (q/background 0)
