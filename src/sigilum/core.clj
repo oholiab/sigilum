@@ -16,7 +16,7 @@
   (q/frame-rate 30)
   (q/color-mode :hsb)
   {:angle 0
-   :image (q/load-image "assets/hexadventure.gif")})
+   :image (q/load-image "assets/hexadventure.png")})
 
 (defn update [state]
   {:angle (+ (:angle state) 0.01)
@@ -92,15 +92,16 @@
     ))
 
 (defn character-at-position-and-angle [character coord angle]
-  (q/with-rotation [angle (x center-coord) (y center-coord) 0]
-    (q/text character (x coord) (y coord)))
+  (q/with-translation [(x coord) (y coord)]
+    (q/with-rotation [(+ (/ Math/PI 2) angle)]
+      (q/text character 0 0)))
   )
 
 
 (defn draw-name-circle [outer inner font name offset]
   (let [outer-c (* 2 outer)
         inner-c (* 2 inner)
-        middle (/ (+ inner outer) 2)]
+        middle (* (+ inner outer) 0.505)]
     (q/ellipse center-x center-y outer-c outer-c)
     (q/ellipse center-x center-y inner-c inner-c)
     (q/text-font (q/create-font font 40 true))
@@ -126,7 +127,7 @@
   (q/stroke 255)
   (let [outer (/ width 2)
         inner (* 0.85 outer)]
-    (draw-name-circle outer inner "Courier" "I thought what I'd do was, I'd pretend I was one of those Twitch streamers * " (- (:angle state)))
+    (draw-name-circle outer inner "DejaVu Sans Mono" "I thought what I'd do was, I'd pretend I was one of those Twitch streamers ☠ " (- (:angle state)))
     (draw-gram 7 3 center-coord inner - (:angle state))
     #_(draw-gram 5 2 [200 120] (- inner 150) + (- (:angle state)))
     #_(let [height (* 2 inner)]
