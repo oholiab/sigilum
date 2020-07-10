@@ -11,16 +11,32 @@
 (def τ (* 2 Math/PI))
 (def x first)
 (def y last)
+(def backup-font (ref nil))
+
+(defn third [x] (nth x 2))
+
+(defn testdickbutt []
+  (q/image-mode :center)
+  (q/image
+   (q/load-image "https://images-na.ssl-images-amazon.com/images/I/41offyG4S3L._SX425_.jpg")
+   (x center-coord)
+   (y center-coord)))
 
 (defn setup []
-  (q/frame-rate 30)
+  (q/smooth)
+  (q/frame-rate 25)
   (q/color-mode :hsb)
+  ;; We have to do this as fonts can't be created outside of a sketch
+  (dosync
+   (ref-set backup-font (q/create-font "Symbola" 30 true)))
   {:angle 0
-   :image (q/load-image "assets/hexadventure.png")})
+   :image (q/load-image "assets/hexadventure.png")
+   :frame 0})
 
 (defn update [state]
   {:angle (+ (:angle state) 0.01)
-   :image (:image state)})
+   :image (:image state)
+   :frame (+ (:frame state) 1)})
 
 (defn gen-angles
   ([num-points]
@@ -67,10 +83,22 @@
           skip)))))
 
 (defn text-in-circle
-  "Returns a seq of vectors of the form [letter angle [x-coord y-coord]]"
-  [name radius offset]
-  (let [angles (gen-angles (count name) + offset)]
-    (map vector name angles (gen-points angles center-coord radius))))
+  "Returns a seq of vectors of the form [letter angle font [x-coord y-coord]] where the returned font will be the backup font if the character is not supported in the specified font"
+  [text font-name radius offset]
+  (let [angles (gen-angles (count text) + offset)
+        font (q/create-font font-name 40 true)
+        java-test-font (new java.awt.Font font-name 0 20)
+        font-map (map #(if (.canDisplay java-test-font %) font @backup-font) text)]
+    (map #(hash-map
+           :character (first %)
+           :angle (second %)
+           :font (third %)
+           :coord (last %))
+         (map vector
+              text
+              angles
+              font-map
+              (gen-points angles center-coord radius)))))
 
 (defn draw-our-cross [height width center-coords]
   (let [thickness (/ width 10)
@@ -91,20 +119,22 @@
     (q/rect short-horizontal-bar-x short-horizontal-bar-y short-horizontal-bar-width (* thickness 0.7))
     ))
 
-(defn character-at-position-and-angle [character coord angle]
+(defn draw-character-at-position-and-angle [character coord angle font]
+  (q/text-font font)
   (q/with-translation [(x coord) (y coord)]
     (q/with-rotation [(+ (/ Math/PI 2) angle)]
-      (q/text character 0 0)))
-  )
+      (q/text character 0 0))))
 
+;; Test for font's ability to display a character:
+;; (.canDisplay (new java.awt.Font "Malachim" 0 20) (first "a"))
 
-(defn draw-name-circle [outer inner font name offset]
+(defn draw-name-circle [outer inner font-name name offset]
   (let [outer-c (* 2 outer)
         inner-c (* 2 inner)
-        middle (* (+ inner outer) 0.505)]
+        middle (* (+ inner outer) 0.500)
+        font (q/create-font font-name 40 true)]
     (q/ellipse center-x center-y outer-c outer-c)
     (q/ellipse center-x center-y inner-c inner-c)
-    (q/text-font (q/create-font font 40 true))
     (q/text-align :center :center)
     (q/fill 255)
     #_(doall
@@ -114,11 +144,13 @@
        )
     (doall
      (map
-      #(character-at-position-and-angle
-        (str (first %))
-        (last %)
-        (second %))
-      (text-in-circle name middle offset)))))
+      #(draw-character-at-position-and-angle
+        (str (:character %))
+        (:coord %)
+        (:angle %)
+        (:font %)
+        )
+      (text-in-circle name font-name middle offset)))))
 
 (defn draw [state]
   (q/background 0)
@@ -127,7 +159,7 @@
   (q/stroke 255)
   (let [outer (/ width 2)
         inner (* 0.85 outer)]
-    (draw-name-circle outer inner "DejaVu Sans Mono" "I thought what I'd do was, I'd pretend I was one of those Twitch streamers ☠ " (- (:angle state)))
+    (draw-name-circle outer inner "DealerplateCalifornia-Regular" "I thought what I'd do was, I'd pretend I was one of those Twitch streamers ⛧ " (- (:angle state)))
     (draw-gram 7 3 center-coord inner - (:angle state))
     #_(draw-gram 5 2 [200 120] (- inner 150) + (- (:angle state)))
     #_(let [height (* 2 inner)]
@@ -135,8 +167,10 @@
     )
   (q/image-mode :center)
   (q/image (:image state) (x center-coord) (y center-coord))
-  #_(g/save-animation "brutals.gif" 200 10)
-  #_(q/text (str "angle: " (:angle state)) 10 20)
+  #_(g/save-animation "brutals.gif" (int (* τ 100)) 4)
+  #_(do
+    (q/text-align :left :top)
+    (q/text (str "frame: " (:frame state)) 10 20))
   )
 
 
